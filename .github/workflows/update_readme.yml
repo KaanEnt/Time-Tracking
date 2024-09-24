@@ -12,7 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: WakaTime Readme
-        uses: anmol098/waka-readme-stats@master
+        uses: KaanEnt/waka-readme-stats@master
         env:
           WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SHOW_TOTAL_CODE_TIME: 'true'
+          SHOW_UPDATED_DATE: 'true'
+          UPDATED_DATE_FORMAT: '%d-%m-%Y'
+          COMMIT_MESSAGE: "Updated Stats"
+          COMMIT_USERNAME: "KaanEnt"
+          COMMIT_EMAIL: "unkaanenterprise@gmail.com"
+          SHOW_COMMIT: 'false'
+          SHOW_PROFILE_VIEWS: 'false'
