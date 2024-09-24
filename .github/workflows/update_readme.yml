@@ -1,4 +1,4 @@
-name: Waka Readme Stats
+name: Readme Stats
 
 on:
   schedule:
@@ -9,7 +9,9 @@ jobs:
   update-readme:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Print Environment Variables
+        run: env | sort
       - name: WakaTime Readme
         uses: KaanEnt/waka-readme-stats@master
         env:
