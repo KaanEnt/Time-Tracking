@@ -31,6 +31,7 @@ async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
     stats = str()
 
     data = await DM.get_remote_json("waka_latest")
+    data = [entry for entry in data if entry['year'] >= 2024]
     if data is None:
         DBM.p("WakaTime data unavailable!")
         return stats
