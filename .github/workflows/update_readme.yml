@@ -17,10 +17,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           SECTION_NAME: "waka"
           SHOW_TOTAL_CODE_TIME: 'true'
-          SHOW_UPDATED_DATE: 'true'
-          UPDATED_DATE_FORMAT: '%d-%m-%Y'
           COMMIT_MESSAGE: "Updated Stats"
           COMMIT_USERNAME: "KaanEnt"
-          COMMIT_EMAIL: "unkaanenterprise@gmail.com"
           SHOW_COMMIT: 'false'
           SHOW_PROFILE_VIEWS: 'false'
