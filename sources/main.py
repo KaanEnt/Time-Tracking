@@ -167,7 +167,7 @@ async def get_stats() -> str:
 
     if EM.SHOW_TOTAL_CODE_TIME:
         DBM.i("Adding total code time info...")
-        data = await DM.get_remote_json("waka_all")
+        data = await DM.get_remote_json("waka_latest")
         if data is None:
             DBM.p("WakaTime data unavailable!")
         else:
