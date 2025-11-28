@@ -17,6 +17,11 @@ inputs:
     required: false
     default: "waka"
 
+  TIME_RANGE:
+    description: 'The time range for stats'
+    required: false
+    default: 'last_30_days'
+
   PULL_BRANCH_NAME:
     required: false
     description: "The branch to get the readme from"
@@ -154,4 +159,5 @@ runs:
 branding:
   icon: 'activity'
   color: 'orange'
+
 
