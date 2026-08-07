@@ -1,0 +1,29 @@
+name: Keep Scheduled Workflows Active
+
+on:
+  schedule:
+    - cron: '17 5 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keep-scheduled-workflows-active
+  cancel-in-progress: true
+
+jobs:
+  keepalive:
+    if: github.repository == 'KaanEnt/Time-Tracking'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Record repository activity
+        run: |
+          printf 'Last activity: %s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" > .github/keepalive
+          git config user.name "KaanEnt"
+          git config user.email "unkaanenterprise@gmail.com"
+          git add .github/keepalive
+          git diff --cached --quiet || git commit -m "chore: keep scheduled workflows active"
+          git push
