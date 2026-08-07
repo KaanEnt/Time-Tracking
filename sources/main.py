@@ -1,9 +1,10 @@
 """
 Readme Development Metrics With waka time progress
 """
+
 from asyncio import run
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from urllib.parse import quote
 
 from humanize import intword, naturalsize, intcomma
@@ -16,6 +17,18 @@ from manager_debug import init_debug_manager, DebugManager as DBM
 from graphics_chart_drawer import create_loc_graph, GRAPH_PATH
 from yearly_commit_calculator import calculate_commit_data
 from graphics_list_formatter import make_list, make_commit_day_time_list, make_language_per_repo_list
+
+
+def format_total_code_time_badge(data: Optional[Dict]) -> str:
+    if data is None:
+        raise RuntimeError("WakaTime data unavailable; refusing to overwrite the README with incomplete stats")
+
+    try:
+        code_time = str(data["data"]["text"])
+    except (KeyError, TypeError) as error:
+        raise RuntimeError("WakaTime returned invalid total code time data; refusing to overwrite the README") from error
+
+    return f"![Code Time](http://img.shields.io/badge/{quote('Code Time')}-{quote(code_time)}-darkred)\n\n"
 
 
 async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
@@ -31,7 +44,7 @@ async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
     stats = str()
 
     data = await DM.get_remote_json("waka_all")
-    
+
     if data is None:
         DBM.p("WakaTime data unavailable!")
         return stats
@@ -168,10 +181,7 @@ async def get_stats() -> str:
     if EM.SHOW_TOTAL_CODE_TIME:
         DBM.i("Adding total code time info...")
         data = await DM.get_remote_json("waka_all")
-        if data is None:
-            DBM.p("WakaTime data unavailable!")
-        else:
-            stats += f"![Code Time](http://img.shields.io/badge/{quote('Code Time')}-{quote(str(data['data']['text']))}-darkred)\n\n"
+        stats += format_total_code_time_badge(data)
 
     if EM.SHOW_PROFILE_VIEWS:
         DBM.i("Adding profile views info...")
@@ -215,13 +225,15 @@ async def main():
     init_localization_manager()
     DBM.i("Managers initialized.")
 
-    stats = await get_stats()
-    if not EM.DEBUG_RUN:
-        GHM.update_readme(stats)
-        GHM.commit_update()
-    else:
-        GHM.set_github_output(stats)
-    await DM.close_remote_resources()
+    try:
+        stats = await get_stats()
+        if not EM.DEBUG_RUN:
+            GHM.update_readme(stats)
+            GHM.commit_update()
+        else:
+            GHM.set_github_output(stats)
+    finally:
+        await DM.close_remote_resources()
 
 
 if __name__ == "__main__":

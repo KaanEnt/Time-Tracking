@@ -1,4 +1,4 @@
-from asyncio import Task
+from asyncio import Task, sleep
 from hashlib import md5
 from json import dumps
 from string import Template
@@ -9,6 +9,8 @@ from yaml import safe_load
 
 from manager_environment import EnvironmentManager as EM
 from manager_debug import DebugManager as DBM
+
+REMOTE_RESOURCE_RETRY_DELAYS = (2, 4, 8, 16)
 
 GITHUB_API_QUERIES = {
     # Query to collect info about all user repositories, including: is it a fork, name and owner login.
@@ -184,6 +186,15 @@ class DownloadManager:
         else:
             res = DownloadManager._REMOTE_RESOURCES_CACHE[resource]
             DBM.g(f"\tQuery '{resource}' loaded from cache!")
+
+        for retry_delay in REMOTE_RESOURCE_RETRY_DELAYS:
+            if res.status_code != 202:
+                break
+            DBM.w(f"\tQuery '{resource}' is still processing; retrying in {retry_delay} seconds")
+            await sleep(retry_delay)
+            res = await DownloadManager._client.get(str(res.url))
+            DownloadManager._REMOTE_RESOURCES_CACHE[resource] = res
+
         if res.status_code == 200:
             if convertor is None:
                 return res.json()

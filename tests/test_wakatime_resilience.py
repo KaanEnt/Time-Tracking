@@ -10,8 +10,11 @@ os.environ.setdefault("INPUT_GH_TOKEN", "test-token")
 os.environ.setdefault("INPUT_WAKATIME_API_KEY", "test-key")
 os.environ.setdefault("INPUT_SYMBOL_VERSION", "1")
 
-import manager_download
-from main import format_total_code_time_badge
+import manager_download  # noqa: E402
+from manager_debug import init_debug_manager  # noqa: E402
+from main import format_total_code_time_badge  # noqa: E402
+
+init_debug_manager()
 
 
 class FakeResponse:
