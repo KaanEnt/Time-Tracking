@@ -2,7 +2,7 @@ name: Keep Scheduled Workflows Active
 
 on:
   schedule:
-    - cron: '17 5 1 * *'
+    - cron: '17 5,17 * * *'
   workflow_dispatch:
 
 permissions:
