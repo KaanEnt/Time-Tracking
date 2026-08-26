@@ -102,6 +102,11 @@ inputs:
     description: "Show Total Time you have coded"
     default: "True"
 
+  SHOW_YEARLY_CODE_TIME:
+    required: false
+    description: "Show Time you have coded over the last 12 months"
+    default: "False"
+
   COMMIT_BY_ME:
     required: false
     description: "Git commit with your own name and email"

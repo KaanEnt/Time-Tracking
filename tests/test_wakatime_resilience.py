@@ -12,7 +12,7 @@ os.environ.setdefault("INPUT_SYMBOL_VERSION", "1")
 
 import manager_download  # noqa: E402
 from manager_debug import init_debug_manager  # noqa: E402
-from main import format_total_code_time_badge  # noqa: E402
+from main import format_total_code_time_badge, format_yearly_code_time_badge  # noqa: E402
 
 init_debug_manager()
 
@@ -74,6 +74,22 @@ class BadgeFormattingTests(unittest.TestCase):
     def test_rejects_missing_wakatime_data(self):
         with self.assertRaisesRegex(RuntimeError, "refusing to overwrite"):
             format_total_code_time_badge(None)
+
+    def test_formats_yearly_badge(self):
+        badge = format_yearly_code_time_badge({"data": {"human_readable_total": "307 hrs 40 mins"}})
+
+        self.assertEqual(
+            badge,
+            "![Last 12 Months](http://img.shields.io/badge/Last%2012%20Months-307%20hrs%2040%20mins-darkred)\n\n",
+        )
+
+    def test_rejects_missing_yearly_data(self):
+        with self.assertRaisesRegex(RuntimeError, "refusing to overwrite"):
+            format_yearly_code_time_badge(None)
+
+    def test_rejects_uncalculated_yearly_stats(self):
+        with self.assertRaisesRegex(RuntimeError, "not calculated yet"):
+            format_yearly_code_time_badge({"data": {"human_readable_total": None}})
 
 
 if __name__ == "__main__":
