@@ -31,6 +31,23 @@ def format_total_code_time_badge(data: Optional[Dict]) -> str:
     return f"![Code Time](http://img.shields.io/badge/{quote('Code Time')}-{quote(code_time)}-darkred)\n\n"
 
 
+def format_yearly_code_time_badge(data: Optional[Dict]) -> str:
+    if data is None:
+        raise RuntimeError("WakaTime yearly data unavailable; refusing to overwrite the README with incomplete stats")
+
+    try:
+        code_time = data["data"]["human_readable_total"]
+    except (KeyError, TypeError) as error:
+        raise RuntimeError("WakaTime returned invalid yearly code time data; refusing to overwrite the README") from error
+
+    # WakaTime nulls the total while a stats range is still being recalculated
+    if not code_time:
+        raise RuntimeError("WakaTime yearly stats are not calculated yet; refusing to overwrite the README")
+
+    label = "Last 12 Months"
+    return f"![{label}](http://img.shields.io/badge/{quote(label)}-{quote(str(code_time))}-darkred)\n\n"
+
+
 async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
     """
     Collects user info from wakatime.
@@ -182,6 +199,11 @@ async def get_stats() -> str:
         DBM.i("Adding total code time info...")
         data = await DM.get_remote_json("waka_all")
         stats += format_total_code_time_badge(data)
+
+    if EM.SHOW_YEARLY_CODE_TIME:
+        DBM.i("Adding yearly code time info...")
+        data = await DM.get_remote_json("waka_year")
+        stats += format_yearly_code_time_badge(data)
 
     if EM.SHOW_PROFILE_VIEWS:
         DBM.i("Adding profile views info...")
