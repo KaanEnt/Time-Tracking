@@ -35,8 +35,11 @@ def format_yearly_code_time_badge(data: Optional[Dict]) -> str:
     if data is None:
         raise RuntimeError("WakaTime yearly data unavailable; refusing to overwrite the README with incomplete stats")
 
+    # human_readable_total omits time WakaTime buckets as the "Other" language,
+    # which for AI-coding heartbeats is a large slice and made the badge read low.
     try:
-        code_time = data["data"]["human_readable_total"]
+        stats = data["data"]
+        code_time = stats.get("human_readable_total_including_other_language") or stats["human_readable_total"]
     except (KeyError, TypeError) as error:
         raise RuntimeError("WakaTime returned invalid yearly code time data; refusing to overwrite the README") from error
 
