@@ -3,8 +3,8 @@ Readme Development Metrics With waka time progress
 """
 
 from asyncio import run
-from datetime import datetime
-from typing import Dict, Optional
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
 from urllib.parse import quote
 
 from humanize import intword, naturalsize, intcomma
@@ -31,24 +31,18 @@ def format_total_code_time_badge(data: Optional[Dict]) -> str:
     return f"![Code Time](http://img.shields.io/badge/{quote('Code Time')}-{quote(code_time)}-darkred)\n\n"
 
 
-def format_yearly_code_time_badge(data: Optional[Dict]) -> str:
-    if data is None:
-        raise RuntimeError("WakaTime yearly data unavailable; refusing to overwrite the README with incomplete stats")
-
-    # human_readable_total omits time WakaTime buckets as the "Other" language,
-    # which for AI-coding heartbeats is a large slice and made the badge read low.
+def format_yearly_code_time_badge(summaries: List[Optional[Dict]]) -> str:
+    # stats/last_year totals each day once and ignores heartbeats that arrive
+    # later, so the window is summed from the daily summaries instead.
     try:
-        stats = data["data"]
-        code_time = stats.get("human_readable_total_including_other_language") or stats["human_readable_total"]
+        total_seconds = sum(summary["cumulative_total"]["seconds"] for summary in summaries)
     except (KeyError, TypeError) as error:
-        raise RuntimeError("WakaTime returned invalid yearly code time data; refusing to overwrite the README") from error
+        raise RuntimeError("WakaTime returned incomplete yearly summaries; refusing to overwrite the README") from error
 
-    # WakaTime nulls the total while a stats range is still being recalculated
-    if not code_time:
-        raise RuntimeError("WakaTime yearly stats are not calculated yet; refusing to overwrite the README")
-
+    hours, minutes = divmod(int(total_seconds) // 60, 60)
+    code_time = f"{intcomma(hours)} {'hr' if hours == 1 else 'hrs'} {minutes} {'min' if minutes == 1 else 'mins'}"
     label = "Last 12 Months"
-    return f"![{label}](http://img.shields.io/badge/{quote(label)}-{quote(str(code_time))}-darkred)\n\n"
+    return f"![{label}](http://img.shields.io/badge/{quote(label)}-{quote(code_time)}-darkred)\n\n"
 
 
 async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
@@ -205,8 +199,8 @@ async def get_stats() -> str:
 
     if EM.SHOW_YEARLY_CODE_TIME:
         DBM.i("Adding yearly code time info...")
-        data = await DM.get_remote_json("waka_year")
-        stats += format_yearly_code_time_badge(data)
+        summaries = await DM.get_yearly_summaries(datetime.now(timezone.utc).date())
+        stats += format_yearly_code_time_badge(summaries)
 
     if EM.SHOW_PROFILE_VIEWS:
         DBM.i("Adding profile views info...")
