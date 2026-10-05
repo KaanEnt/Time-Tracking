@@ -1,4 +1,5 @@
 from asyncio import Task, sleep
+from datetime import date, timedelta
 from hashlib import md5
 from json import dumps
 from string import Template
@@ -11,6 +12,9 @@ from manager_environment import EnvironmentManager as EM
 from manager_debug import DebugManager as DBM
 
 REMOTE_RESOURCE_RETRY_DELAYS = (2, 4, 8, 16)
+YEARLY_WINDOW_DAYS = 365
+# WakaTime drops the connection on a long summaries range when its per-day cache is cold
+YEARLY_SUMMARY_CHUNK_DAYS = 31
 
 GITHUB_API_QUERIES = {
     # Query to collect info about all user repositories, including: is it a fork, name and owner login.
@@ -115,6 +119,16 @@ mutation {
 }
 
 
+def yearly_summary_urls(today: date) -> Dict[str, str]:
+    start = today - timedelta(days=YEARLY_WINDOW_DAYS - 1)
+    urls = dict()
+    while start <= today:
+        end = min(start + timedelta(days=YEARLY_SUMMARY_CHUNK_DAYS - 1), today)
+        urls[f"waka_year_{len(urls)}"] = f"https://wakatime.com/api/v1/users/current/summaries?start={start}&end={end}&api_key={EM.WAKATIME_API_KEY}"
+        start = end + timedelta(days=1)
+    return urls
+
+
 async def init_download_manager(user_login: str):
     """
     Initialize download manager:
@@ -127,7 +141,6 @@ async def init_download_manager(user_login: str):
         linguist="https://cdn.jsdelivr.net/gh/github/linguist@master/lib/linguist/languages.yml",
         waka_latest=f"https://wakatime.com/api/v1/users/current/stats/last_30_days?api_key={EM.WAKATIME_API_KEY}",
         waka_all=f"https://wakatime.com/api/v1/users/current/all_time_since_today?api_key={EM.WAKATIME_API_KEY}",
-        waka_year=f"https://wakatime.com/api/v1/users/current/stats/last_year?api_key={EM.WAKATIME_API_KEY}",
         github_stats=f"https://github-contributions.vercel.app/api/v1/{user_login}",
     )
 
@@ -218,6 +231,17 @@ class DownloadManager:
         :return: Response JSON dictionary.
         """
         return await DownloadManager._get_remote_resource(resource, None)
+
+    @staticmethod
+    async def get_yearly_summaries(today: date) -> List[Optional[Dict]]:
+        """
+        Fetch WakaTime daily summaries for the 365 days ending today, one chunk at a time.
+        :param today: Last day of the window.
+        :return: Response JSON dictionaries, one per chunk, oldest first.
+        """
+        urls = yearly_summary_urls(today)
+        await DownloadManager.load_remote_resources(**urls)
+        return [await DownloadManager.get_remote_json(resource) for resource in urls]
 
     @staticmethod
     async def get_remote_yaml(resource: str) -> Dict or None:
