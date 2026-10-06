@@ -16,4 +16,4 @@ PyYAML~=6.0
 
 # Codestyle checking modules:
 flake8~=7.1
-black~=24.10
+black~=25.1
